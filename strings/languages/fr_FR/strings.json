@@ -516,7 +516,8 @@
     "textColor": "Couleur du texte",
     "textColorModal": "Text color",
     "title": "Lecteur",
-    "verticalSeekbarDesc": "Use vertical seekbar"
+    "verticalSeekbarDesc": "Use vertical seekbar",
+    "volumeButtonOffset": "Volume button scroll offset (screen heights)"
   },
   "sourceScreen": {
     "noResultsFound": "Aucun résultat trouvé"
