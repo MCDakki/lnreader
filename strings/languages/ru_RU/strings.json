@@ -77,7 +77,7 @@
     "savingBackup": "Сохранение резервной копии",
     "categoriesRestored": "Восстановлены %{count} категории",
     "categoriesRestoredWithErrors": "Restored %{count} categories (%{failedCount} failed)",
-    "categoryRestoreFailed": "Failed to restore category: %{categoryName} - %{error}",
+    "categoryRestoreFailed": "Не удалось восстановить категорию: %{categoryName} - %{error}",
     "categoryFileNotFound": "Category file not found in backup",
     "categoryFileReadFailed": "Failed to read category file: %{error}",
     "categoryFileWriteFailed": "Failed to write category file: %{error}",
