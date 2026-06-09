@@ -517,7 +517,7 @@
     "textColorModal": "文字颜色",
     "title": "阅读器",
     "verticalSeekbarDesc": "使用垂直进度条",
-    "volumeButtonOffset": "Volume button scroll offset (screen heights)"
+    "volumeButtonOffset": "音量按钮滚动偏移量（屏幕高度)"
   },
   "sourceScreen": {
     "noResultsFound": "未找到相应结果"
