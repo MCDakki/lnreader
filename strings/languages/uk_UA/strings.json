@@ -4,7 +4,7 @@
     "discord": "Discord",
     "github": "Github",
     "helpTranslate": "Долучитися до перекладу",
-    "plugins": "Plugins",
+    "plugins": "Плагіни",
     "version": "Версія",
     "whatsNew": "Останні оновлення"
   },
@@ -14,35 +14,35 @@
     "chapterInsertFailed": "не вдалося додати розділ",
     "clearCachedNovels": "Очистити кеш новел",
     "clearCachedNovelsDesc": "Видалити кешовані новели, які не збережені у вашій бібліотеці",
-    "clearDatabaseWarning": "Read and Downloaded chapters and progress of non-library novels will be lost.",
+    "clearDatabaseWarning": "Ви впевнені? Прочитані та завантажені розділи та прогрес не бібліотечних новел будуть втрачені.",
     "clearUpdatesMessage": "Оновлення очищено.",
     "clearUpdatesTab": "Очистити вкладку оновлень",
-    "clearUpdatesWarning": "Updates tab will be cleared.",
+    "clearUpdatesWarning": "Вкладка оновлень буде очищена.",
     "clearupdatesTabDesc": "Видаляє записи розділів у вкладці оновлень",
     "dataManagement": "Керування даними",
     "deleteReadChapters": "Видалити прочитані розділи",
-    "deleteReadChaptersDialogTitle": "All chapters marked as read will be deleted.",
+    "deleteReadChaptersDialogTitle": "Ви впевнені? Всі розділи, позначені як прочитані, будуть видалені.",
     "importEpub": "імпортувати EPUB",
     "importNovel": "Імпортувати новелу",
     "importStaticFiles": "Імпортувати статичні файли",
     "novelInsertFailed": "не вдалося вставити новелу",
     "useFAB": "Використовувати FAB замість кнопки",
     "userAgent": "User Agent",
-    "recreateDBIndexes": "Recreate DB indexes",
-    "recreateDBIndexesToast": "Recreated DB indexes",
-    "recreateDBIndexesDialogTitle": "All DB indexes will be recreated.\nThis may take a while.",
-    "recreateDBIndexesDesc": "Recreates DB indexes. This may improve performance on slower devices."
+    "recreateDBIndexes": "Перестворити індекси бази даних",
+    "recreateDBIndexesToast": "Індекси бази даних перестворені",
+    "recreateDBIndexesDialogTitle": "Усі індекси бази даних будуть перестворені.\nЦе може зайняти деякий час.",
+    "recreateDBIndexesDesc": "Перестворює індекси бази даних. Це може покращити продуктивність на слабких пристроях."
   },
   "appearance": "Зовнішній вигляд",
   "appearanceScreen": {
     "accentColor": "Основний колір",
     "alwaysShowNavLabels": "Завжди показувати мітки навігації",
-    "appLanguage": "App language",
+    "appLanguage": "Мова додатка",
     "languagePickerModal": {
-      "title": "Select Language",
-      "restartNote": "You will need to restart the app for the language change to take full effect."
+      "title": "Мова додатка",
+      "restartNote": "Вам потрібно буде перезапустити додаток, щоб зміни мови набули повної чинності."
     },
-    "appLanguageDefault": "Default",
+    "appLanguageDefault": "За замовчуванням",
     "appTheme": "Тема додатка",
     "darkTheme": "Темна тема",
     "hideBackdrop": "Приховати фон",
@@ -52,10 +52,10 @@
     "pureBlackDarkMode": "Режим Pure Black",
     "showHistoryInTheNav": "Показувати історію в навігації",
     "showUpdatesInTheNav": "Показувати оновлення в навігації",
-    "themeMode": "Theme mode",
-    "themeModeLight": "Light",
-    "themeModeDark": "Dark",
-    "themeModeSystem": "System",
+    "themeMode": "Режим теми",
+    "themeModeLight": "Світла",
+    "themeModeDark": "Темна",
+    "themeModeSystem": "Системна",
     "theme": {
       "default": "За замовчуванням",
       "lavender": "Лаванда",
@@ -67,7 +67,7 @@
       "turquoise": "Турмалін",
       "yotsuba": "Йоцуба",
       "catppuccin": "Catppuccin",
-      "yinyang": "Yin & Yang"
+      "yinyang": "Їнь і Ян"
     }
   },
   "backupScreen": {
