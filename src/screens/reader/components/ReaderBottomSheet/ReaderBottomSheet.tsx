@@ -94,6 +94,8 @@ const GeneralTab: React.FC = React.memo(() => {
       { key: 'bionicReading', label: 'bionicReading' },
       { key: 'tapToScroll', label: 'tapToScroll' },
       { key: 'keepScreenOn', label: 'keepScreenOn' },
+      { key: 'autoTranslate', label: 'autoTranslate' },
+      { key: 'webviewScraperFallback', label: 'webviewFallback' },
     ],
     [],
   );
@@ -145,7 +147,12 @@ const ReaderBottomSheetV2: React.FC<ReaderBottomSheetV2Props> = ({
   const backgroundColor = tabHeaderColor;
 
   const renderScene = useMemo(
-    () => SceneMap({ readerTab: ReaderTab, generalTab: GeneralTab, ttsTab: TTSTab }),
+    () =>
+      SceneMap({
+        readerTab: ReaderTab,
+        generalTab: GeneralTab,
+        ttsTab: TTSTab,
+      }),
     [],
   );
 

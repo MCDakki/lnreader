@@ -12,7 +12,9 @@ import { ErrorScreenV2 } from '@components';
 import { ChapterScreenProps } from '@navigators/types';
 import { getString } from '@strings/translations';
 import KeepScreenAwake from './components/KeepScreenAwake';
+import HiddenWebviewScraper from './components/HiddenWebviewScraper';
 import { ChapterContextProvider, useChapterContext } from './ChapterContext';
+import { resolveUrl } from '@services/plugin/fetch';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
 import { useBackHandler } from '@hooks/index';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -59,6 +61,10 @@ type ChapterContentProps = ChapterScreenProps & {
   openDrawer: () => void;
 };
 
+// Scraped paragraphs are plain innerText; escape before wrapping in <p>.
+const escapeHtmlText = (text: string) =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
 export const ChapterContent = ({
   navigation,
   openDrawer,
@@ -67,15 +73,34 @@ export const ChapterContent = ({
   const { novel, chapter } = useChapterContext();
   const readerSheetRef = useRef<BottomSheetModalMethods>(null);
   const theme = useTheme();
-  const { pageReader = false, keepScreenOn } = useChapterGeneralSettings();
-  const [bookmarked, setBookmarked] = useState<boolean>(chapter.bookmark ?? false);
+  const {
+    pageReader = false,
+    keepScreenOn,
+    webviewScraperFallback = true,
+  } = useChapterGeneralSettings();
+  const [bookmarked, setBookmarked] = useState<boolean>(
+    chapter.bookmark ?? false,
+  );
+  const [scraperFailed, setScraperFailed] = useState(false);
 
   useEffect(() => {
     setBookmarked(chapter.bookmark ?? false);
   }, [chapter]);
 
-  const { hidden, loading, error, webViewRef, hideHeader, refetch } =
-    useChapterContext();
+  // A new chapter gets a fresh shot at the WebView fallback.
+  useEffect(() => {
+    setScraperFailed(false);
+  }, [chapter.id]);
+
+  const {
+    hidden,
+    loading,
+    error,
+    webViewRef,
+    hideHeader,
+    refetch,
+    recoverFromWebview,
+  } = useChapterContext();
 
   const scrollToStart = () =>
     requestAnimationFrame(() => {
@@ -97,6 +122,26 @@ export const ChapterContent = ({
   }, [hideHeader, openDrawer]);
 
   if (error) {
+    // Plugin fetch failed: before surfacing the error, silently load
+    // the chapter URL in a hidden WebView and scrape the DOM. On
+    // success the recovered text re-enters the normal pipeline and
+    // this branch unmounts; on failure the usual error screen shows.
+    if (webviewScraperFallback && !scraperFailed) {
+      return (
+        <>
+          <ChapterLoadingScreen />
+          <HiddenWebviewScraper
+            url={resolveUrl(novel.pluginId, chapter.path)}
+            onScraped={paragraphs =>
+              recoverFromWebview(
+                paragraphs.map(p => `<p>${escapeHtmlText(p)}</p>`).join('\n'),
+              )
+            }
+            onFail={() => setScraperFailed(true)}
+          />
+        </>
+      );
+    }
     return (
       <ErrorScreenV2
         error={error}
@@ -121,9 +166,7 @@ export const ChapterContent = ({
     );
   }
   return (
-    <View
-      style={[{ paddingStart: left, paddingEnd: right }, styles.container]}
-    >
+    <View style={[{ paddingStart: left, paddingEnd: right }, styles.container]}>
       {keepScreenOn ? <KeepScreenAwake /> : null}
       {loading ? (
         <ChapterLoadingScreen />

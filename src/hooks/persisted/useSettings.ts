@@ -117,6 +117,16 @@ export interface ChapterGeneralSettings {
   bionicReading: boolean;
   tapToScroll: boolean;
   TTSEnable: boolean;
+
+  /**
+   * Auto-translate & WebView fallback scraper
+   */
+
+  autoTranslate: boolean;
+  translationApiUrl: string;
+  translationModel: string;
+  translationTargetLanguage: string;
+  webviewScraperFallback: boolean;
 }
 
 export interface ReaderTheme {
@@ -213,6 +223,11 @@ export const initialChapterGeneralSettings: ChapterGeneralSettings = {
   bionicReading: false,
   tapToScroll: false,
   TTSEnable: true,
+  autoTranslate: false,
+  translationApiUrl: 'http://127.0.0.1:11434/api/chat',
+  translationModel: 'qwen3:4b',
+  translationTargetLanguage: 'English',
+  webviewScraperFallback: true,
 };
 
 export const initialChapterReaderSettings: ChapterReaderSettings = {

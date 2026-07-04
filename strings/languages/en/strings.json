@@ -484,7 +484,9 @@
       "useChapterDrawerSwipeNavigation": "Swipe to open drawer",
       "verticalSeekbar": "Vertical seekbar",
       "keepScreenOn": "Keep screen on",
-      "volumeButtonsScroll": "Volume button scrolling"
+      "volumeButtonsScroll": "Volume button scrolling",
+      "autoTranslate": "Auto-translate (AI)",
+      "webviewFallback": "WebView fallback scraper"
     },
     "drawer": {
       "scrollToBottom": "Scroll to bottom",
