@@ -342,6 +342,23 @@ export default function useChapter(
     getChapter();
   }, [getChapter]);
 
+  /**
+   * Feed chapter HTML recovered by the hidden WebView scraper back
+   * into the normal pipeline (sanitize → state → cache), clearing the
+   * fetch error that triggered the fallback.
+   */
+  const recoverFromWebview = useCallback(
+    (rawHtml: string) => {
+      chapterTextCache.write(chapter.id, rawHtml);
+      setChapterText(
+        sanitizeChapterText(novel.pluginId, novel.name, chapter.name, rawHtml),
+      );
+      setError(undefined);
+      setLoading(false);
+    },
+    [chapter.id, chapter.name, chapterTextCache, novel.name, novel.pluginId],
+  );
+
   return useMemo(
     () => ({
       hidden,
@@ -356,6 +373,7 @@ export default function useChapter(
       hideHeader,
       navigateChapter,
       refetch,
+      recoverFromWebview,
       setChapter,
       setLoading,
       getChapter,
@@ -373,6 +391,7 @@ export default function useChapter(
       hideHeader,
       navigateChapter,
       refetch,
+      recoverFromWebview,
       setChapter,
       setLoading,
       getChapter,
