@@ -1,44 +1,42 @@
 /**
- * Translation API engine.
+ * Translation engine — fully on-device.
  *
- * Sends arrays of novel paragraphs to a local/self-hosted LLM endpoint
- * (Ollama `/api/chat`, or any OpenAI-compatible `/v1/chat/completions`
- * server) and returns the translated array.
+ * Feeds arrays of novel paragraphs into the local llama.rn context
+ * (see localEngine.ts) and returns the translated array. No network
+ * traffic is involved at inference time.
  *
  * Guarantees:
  * - The returned array always has the same length/order as the input.
- * - On any unrecoverable API failure, the original untranslated
+ * - On any unrecoverable inference failure, the original untranslated
  *   paragraphs are returned for the affected batch — never a rejection.
  */
+import { DEFAULT_TRANSLATION_MODEL_URL } from './constants';
+import { completeChat } from './localEngine';
 
 export interface TranslationConfig {
-  /** Full endpoint URL, e.g. `http://127.0.0.1:11434/api/chat`. */
-  apiUrl: string;
-  /** Model tag, e.g. `qwen3:4b` or `gemma3:4b`. */
-  model: string;
+  /** GGUF source URL; identifies the local model file to run. */
+  modelUrl: string;
   /** Target language name used in the system prompt. */
   targetLanguage: string;
-  /** Optional bearer token for OpenAI-compatible servers. */
-  apiKey?: string;
   /**
-   * Character budget per request batch. ~4 chars ≈ 1 token, so the
-   * default 6000 keeps prompt + completion well inside a 4B model's
-   * 8k context window.
+   * Character budget per inference batch. The runtime context is
+   * n_ctx 2048 shared between system prompt (~250 tokens), input and
+   * output; CJK source text runs ≈1 token per character, so 1600
+   * chars keeps prompt + translation inside the window.
    */
   maxBatchChars: number;
   /** Attempts per batch (1 initial + retries with backoff). */
   maxAttempts: number;
-  /** Per-request timeout. Small local models can be slow — be generous. */
-  timeoutMs: number;
+  /** Max tokens the model may generate per batch. */
+  nPredict: number;
 }
 
 export const DEFAULT_TRANSLATION_CONFIG: TranslationConfig = {
-  apiUrl: 'http://127.0.0.1:11434/api/chat',
-  model: 'qwen3:4b',
+  modelUrl: DEFAULT_TRANSLATION_MODEL_URL,
   targetLanguage: 'English',
-  maxBatchChars: 6000,
-  maxAttempts: 3,
-  timeoutMs: 120_000,
+  maxBatchChars: 1600,
+  maxAttempts: 2,
+  nPredict: 1200,
 };
 
 const SEGMENT_MARKER = (n: number) => `<<<SEG_${n}>>>`;
@@ -57,25 +55,13 @@ STRICT OUTPUT RULES — follow ALL of them:
 /** True when the string carries translatable content (has letters). */
 const isTranslatable = (text: string): boolean => /\p{L}/u.test(text);
 
-/** Strip reasoning tags (Qwen3), stray code fences and outer whitespace. */
+/** Strip reasoning tags, stray code fences and outer whitespace. */
 const cleanModelOutput = (raw: string): string =>
   raw
     .replace(/<think>[\s\S]*?<\/think>/gi, '')
     .replace(/^\s*```[a-z]*\s*\n?/i, '')
     .replace(/\n?```\s*$/, '')
     .trim();
-
-/** Pull the assistant text out of Ollama chat / generate or OpenAI shapes. */
-const extractContent = (data: any): string => {
-  const content =
-    data?.message?.content ??
-    data?.choices?.[0]?.message?.content ??
-    data?.response;
-  if (typeof content !== 'string') {
-    throw new Error('Unrecognized API response shape');
-  }
-  return content;
-};
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -92,7 +78,7 @@ export const buildBatches = (
   let currentSize = 0;
   paragraphs.forEach((text, index) => {
     if (!isTranslatable(text)) {
-      return; // passed through untouched, never sent to the API
+      return; // passed through untouched, never sent to the model
     }
     if (current.length > 0 && currentSize + text.length > maxBatchChars) {
       batches.push(current);
@@ -143,58 +129,34 @@ export const parseSegmentedResponse = (
 const requestTranslation = async (
   texts: string[],
   config: TranslationConfig,
-  signal: AbortSignal,
 ): Promise<string[]> => {
   const payload = texts
     .map((text, i) => `${SEGMENT_MARKER(i + 1)}\n${text}`)
     .join('\n');
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
-  const onOuterAbort = () => controller.abort();
-  signal.addEventListener('abort', onOuterAbort);
+  const output = await completeChat(
+    [
+      { role: 'system', content: buildSystemPrompt(config.targetLanguage) },
+      { role: 'user', content: payload },
+    ],
+    {
+      modelUrl: config.modelUrl,
+      nPredict: config.nPredict,
+      temperature: 0.1,
+    },
+  );
 
-  try {
-    const response = await fetch(config.apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(config.apiKey
-          ? { Authorization: `Bearer ${config.apiKey}` }
-          : undefined),
-      },
-      body: JSON.stringify({
-        model: config.model,
-        stream: false,
-        // Qwen3: skip the <think> phase; ignored by other models/servers.
-        think: false,
-        options: { temperature: 0.1 },
-        temperature: 0.1,
-        messages: [
-          { role: 'system', content: buildSystemPrompt(config.targetLanguage) },
-          { role: 'user', content: payload },
-        ],
-      }),
-      signal: controller.signal,
-    });
-    if (!response.ok) {
-      throw new Error(`Translation API HTTP ${response.status}`);
-    }
-    const output = cleanModelOutput(extractContent(await response.json()));
-    return parseSegmentedResponse(output, texts.length);
-  } finally {
-    clearTimeout(timeout);
-    signal.removeEventListener('abort', onOuterAbort);
-  }
+  return parseSegmentedResponse(cleanModelOutput(output), texts.length);
 };
 
 /**
- * Translate an array of paragraphs.
+ * Translate an array of paragraphs on-device.
  *
- * Batches sequentially (local inference servers dislike concurrency),
- * retries each batch with exponential backoff, and falls back to the
- * original text for any batch that ultimately fails. Non-translatable
- * paragraphs (whitespace, "***" separators…) are passed through as-is.
+ * Batches run sequentially (the llama context is a single stream),
+ * each batch retries with backoff on malformed output, and any batch
+ * that ultimately fails falls back to its original text.
+ * Non-translatable paragraphs ("***" separators, whitespace…) are
+ * passed through as-is.
  */
 export const translateParagraphs = async (
   paragraphs: string[],
@@ -215,7 +177,7 @@ export const translateParagraphs = async (
     const texts = batch.map(index => paragraphs[index]);
     for (let attempt = 1; attempt <= config.maxAttempts; attempt++) {
       try {
-        const translated = await requestTranslation(texts, config, signal);
+        const translated = await requestTranslation(texts, config);
         batch.forEach((paragraphIndex, i) => {
           result[paragraphIndex] = translated[i];
         });

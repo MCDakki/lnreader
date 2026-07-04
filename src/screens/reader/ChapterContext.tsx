@@ -3,11 +3,13 @@ import { ChapterInfo, NovelInfo } from '@database/types';
 import WebView from 'react-native-webview';
 import useChapter from './hooks/useChapter';
 import useChapterTextInterceptor from './hooks/useChapterTextInterceptor';
+import { TranslationModelState } from '@services/translation/useTranslationModel';
 
 type ChapterContextType = ReturnType<typeof useChapter> & {
   novel: NovelInfo;
   webViewRef: React.RefObject<WebView<{}> | null>;
   translating: boolean;
+  translationModel: TranslationModelState;
 };
 
 const defaultValue = {} as ChapterContextType;
@@ -28,10 +30,11 @@ export function ChapterContextProvider({
 
   // Auto-Translate interception point: swaps the rendered text (and
   // holds the loading screen) without touching useChapter itself.
-  const { chapterText, translating } = useChapterTextInterceptor(
-    chapterHookContent.chapterText,
-    chapterHookContent.chapter,
-  );
+  const { chapterText, translating, translationModel } =
+    useChapterTextInterceptor(
+      chapterHookContent.chapterText,
+      chapterHookContent.chapter,
+    );
 
   const contextValue = useMemo(
     () => ({
@@ -40,9 +43,17 @@ export function ChapterContextProvider({
       ...chapterHookContent,
       chapterText,
       translating,
+      translationModel,
       loading: chapterHookContent.loading || translating,
     }),
-    [novel, webViewRef, chapterHookContent, chapterText, translating],
+    [
+      novel,
+      webViewRef,
+      chapterHookContent,
+      chapterText,
+      translating,
+      translationModel,
+    ],
   );
 
   return (

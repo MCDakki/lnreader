@@ -6,10 +6,13 @@ import {
   useChapterGeneralSettings,
 } from '@hooks/persisted/useSettings';
 import { translateChapterHtml } from '@services/translation/translateHtml';
+import useTranslationModel, {
+  TranslationModelState,
+} from '@services/translation/useTranslationModel';
 
 /**
  * In-memory cache of translated chapters, so toggling the setting or
- * revisiting a chapter in the same session doesn't re-hit the API.
+ * revisiting a chapter in the same session doesn't re-run inference.
  * Keyed by chapter id; entries also remember the source text so a
  * refetched/changed chapter invalidates naturally.
  */
@@ -18,8 +21,10 @@ const translatedCache = new Map<number, { source: string; html: string }>();
 interface InterceptedChapterText {
   /** Text to render: translated HTML when ready, original otherwise. */
   chapterText: string;
-  /** True while a translation request is in flight for this chapter. */
+  /** True while local inference is running for this chapter. */
   translating: boolean;
+  /** First-boot downloader state for the on-device model. */
+  translationModel: TranslationModelState;
 }
 
 /**
@@ -27,10 +32,11 @@ interface InterceptedChapterText {
  * layer (see docs/reader-architecture.md §4, "ChapterContext" option).
  *
  * When Auto-Translate is off this is a pass-through. When on, the
- * sanitized chapter HTML is routed through the translation engine and
- * the translated HTML is swapped in; the translation engine guarantees
- * fallback to the original text on API failure, so the reader can
- * never end up blank.
+ * sanitized chapter HTML is routed through the on-device llama.rn
+ * engine once the model asset is present (the reader UI blocks on the
+ * first-boot download via `translationModel`). The engine guarantees
+ * fallback to the original text on failure, so the reader can never
+ * end up blank.
  */
 export default function useChapterTextInterceptor(
   chapterText: string,
@@ -40,14 +46,15 @@ export default function useChapterTextInterceptor(
   // Older installs may lack the new keys in their persisted object.
   const autoTranslate =
     settings.autoTranslate ?? initialChapterGeneralSettings.autoTranslate;
-  const apiUrl =
-    settings.translationApiUrl ||
-    initialChapterGeneralSettings.translationApiUrl;
-  const model =
-    settings.translationModel || initialChapterGeneralSettings.translationModel;
+  const modelUrl =
+    settings.translationModelUrl ||
+    initialChapterGeneralSettings.translationModelUrl;
   const targetLanguage =
     settings.translationTargetLanguage ||
     initialChapterGeneralSettings.translationTargetLanguage;
+
+  const translationModel = useTranslationModel(autoTranslate, modelUrl);
+  const modelReady = translationModel.status === 'ready';
 
   const [translated, setTranslated] = useState<{
     chapterId: number;
@@ -61,7 +68,7 @@ export default function useChapterTextInterceptor(
     // Invalidate any in-flight job whenever inputs change.
     const job = ++jobRef.current;
 
-    if (!autoTranslate || !chapterText) {
+    if (!autoTranslate || !chapterText || !modelReady) {
       setTranslating(false);
       return;
     }
@@ -81,7 +88,7 @@ export default function useChapterTextInterceptor(
     setTranslating(true);
     translateChapterHtml(
       chapterText,
-      { apiUrl, model, targetLanguage },
+      { modelUrl, targetLanguage },
       abort.signal,
     )
       .then(html => {
@@ -101,7 +108,14 @@ export default function useChapterTextInterceptor(
       });
 
     return () => abort.abort();
-  }, [autoTranslate, chapterText, chapter.id, apiUrl, model, targetLanguage]);
+  }, [
+    autoTranslate,
+    chapterText,
+    chapter.id,
+    modelReady,
+    modelUrl,
+    targetLanguage,
+  ]);
 
   const translationReady =
     autoTranslate &&
@@ -111,5 +125,6 @@ export default function useChapterTextInterceptor(
   return {
     chapterText: translationReady ? translated.html : chapterText,
     translating: autoTranslate && translating,
+    translationModel,
   };
 }

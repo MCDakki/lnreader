@@ -7,6 +7,7 @@ import {
 import { Voice } from 'expo-speech';
 import { useMMKVObject } from 'react-native-mmkv';
 import { getMMKVObject } from '@utils/mmkv/mmkv';
+import { DEFAULT_TRANSLATION_MODEL_URL } from '@services/translation/constants';
 
 export const APP_SETTINGS = 'APP_SETTINGS';
 
@@ -119,12 +120,12 @@ export interface ChapterGeneralSettings {
   TTSEnable: boolean;
 
   /**
-   * Auto-translate & WebView fallback scraper
+   * Auto-translate (on-device llama.rn) & WebView fallback scraper
    */
 
   autoTranslate: boolean;
-  translationApiUrl: string;
-  translationModel: string;
+  /** GGUF download source for the local translation model. */
+  translationModelUrl: string;
   translationTargetLanguage: string;
   webviewScraperFallback: boolean;
 }
@@ -224,8 +225,7 @@ export const initialChapterGeneralSettings: ChapterGeneralSettings = {
   tapToScroll: false,
   TTSEnable: true,
   autoTranslate: false,
-  translationApiUrl: 'http://127.0.0.1:11434/api/chat',
-  translationModel: 'qwen3:4b',
+  translationModelUrl: DEFAULT_TRANSLATION_MODEL_URL,
   translationTargetLanguage: 'English',
   webviewScraperFallback: true,
 };

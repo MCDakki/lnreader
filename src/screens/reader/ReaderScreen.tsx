@@ -13,6 +13,7 @@ import { ChapterScreenProps } from '@navigators/types';
 import { getString } from '@strings/translations';
 import KeepScreenAwake from './components/KeepScreenAwake';
 import HiddenWebviewScraper from './components/HiddenWebviewScraper';
+import TranslationModelOverlay from './components/TranslationModelOverlay';
 import { ChapterContextProvider, useChapterContext } from './ChapterContext';
 import { resolveUrl } from '@services/plugin/fetch';
 import { BottomSheetModalMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
@@ -100,7 +101,14 @@ export const ChapterContent = ({
     hideHeader,
     refetch,
     recoverFromWebview,
+    translationModel,
   } = useChapterContext();
+
+  // First-boot gate: with Auto-Translate on, reading is blocked until
+  // the on-device model has finished downloading.
+  const modelBlocking =
+    translationModel.status !== 'disabled' &&
+    translationModel.status !== 'ready';
 
   const scrollToStart = () =>
     requestAnimationFrame(() => {
@@ -168,7 +176,9 @@ export const ChapterContent = ({
   return (
     <View style={[{ paddingStart: left, paddingEnd: right }, styles.container]}>
       {keepScreenOn ? <KeepScreenAwake /> : null}
-      {loading ? (
+      {modelBlocking ? (
+        <TranslationModelOverlay model={translationModel} />
+      ) : loading ? (
         <ChapterLoadingScreen />
       ) : (
         <WebViewReader onPress={hideHeader} />

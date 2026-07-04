@@ -4,10 +4,16 @@ import {
   translateParagraphs,
 } from '../translator';
 import { translateChapterHtml } from '../translateHtml';
+import { completeChat } from '../localEngine';
 
-const ollamaResponse = (content: string) => ({
-  ok: true,
-  json: async () => ({ message: { content } }),
+jest.mock('../localEngine', () => ({
+  completeChat: jest.fn(),
+}));
+
+const mockCompleteChat = completeChat as jest.Mock;
+
+beforeEach(() => {
+  mockCompleteChat.mockReset();
 });
 
 describe('buildBatches', () => {
@@ -39,70 +45,61 @@ describe('parseSegmentedResponse', () => {
   });
 });
 
-describe('translateParagraphs', () => {
-  const originalFetch = global.fetch;
-  afterEach(() => {
-    global.fetch = originalFetch;
-    jest.restoreAllMocks();
-  });
-
-  it('translates via the API and preserves array order/length', async () => {
-    global.fetch = jest.fn(async () =>
-      ollamaResponse('<<<SEG_1>>>\nHello\n<<<SEG_2>>>\nWorld'),
-    ) as any;
+describe('translateParagraphs (local llama.rn engine)', () => {
+  it('translates via the local engine and preserves array order/length', async () => {
+    mockCompleteChat.mockResolvedValueOnce(
+      '<<<SEG_1>>>\nHello\n<<<SEG_2>>>\nWorld',
+    );
 
     const result = await translateParagraphs(['こんにちは', '***', '世界'], {
       maxAttempts: 1,
     });
     expect(result).toEqual(['Hello', '***', 'World']);
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(mockCompleteChat).toHaveBeenCalledTimes(1);
+    // Strings are fed straight into the local completion, not HTTP.
+    const [messages, options] = mockCompleteChat.mock.calls[0];
+    expect(messages[0].role).toBe('system');
+    expect(messages[1].content).toContain('こんにちは');
+    expect(options.modelUrl).toBeTruthy();
   });
 
-  it('returns the original text when the API fails completely', async () => {
-    global.fetch = jest.fn(async () => {
-      throw new Error('ECONNREFUSED');
-    }) as any;
+  it('returns the original text when inference fails completely', async () => {
+    mockCompleteChat.mockRejectedValue(new Error('context init failed'));
 
     const paragraphs = ['こんにちは', '世界'];
     const result = await translateParagraphs(paragraphs, {
       maxAttempts: 2,
     });
     expect(result).toEqual(paragraphs);
-    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(mockCompleteChat).toHaveBeenCalledTimes(2);
   });
 
   it('retries a malformed response before falling back', async () => {
-    global.fetch = jest
-      .fn()
-      .mockResolvedValueOnce(ollamaResponse('Sure! Here is my translation.'))
-      .mockResolvedValueOnce(ollamaResponse('<<<SEG_1>>>\nHello')) as any;
+    mockCompleteChat
+      .mockResolvedValueOnce('Sure! Here is my translation.')
+      .mockResolvedValueOnce('<<<SEG_1>>>\nHello');
 
     const result = await translateParagraphs(['こんにちは'], {
       maxAttempts: 2,
     });
     expect(result).toEqual(['Hello']);
-    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(mockCompleteChat).toHaveBeenCalledTimes(2);
   });
 
-  it('strips Qwen3 <think> blocks from the output', async () => {
-    global.fetch = jest.fn(async () =>
-      ollamaResponse('<think>reasoning…</think>\n<<<SEG_1>>>\nHello'),
-    ) as any;
+  it('strips reasoning <think> blocks from the output', async () => {
+    mockCompleteChat.mockResolvedValueOnce(
+      '<think>reasoning…</think>\n<<<SEG_1>>>\nHello',
+    );
 
     expect(await translateParagraphs(['こんにちは'])).toEqual(['Hello']);
   });
 });
 
 describe('translateChapterHtml', () => {
-  const originalFetch = global.fetch;
-  afterEach(() => {
-    global.fetch = originalFetch;
-  });
-
   it('translates text nodes while preserving markup', async () => {
-    global.fetch = jest.fn(async () =>
-      ollamaResponse('<<<SEG_1>>>\nHello\n<<<SEG_2>>>\nWorld'),
-    ) as any;
+    mockCompleteChat.mockResolvedValueOnce(
+      '<<<SEG_1>>>\nHello\n<<<SEG_2>>>\nWorld',
+    );
 
     const html = '<p class="a">こんにちは</p>\n<p><b>世界</b></p>';
     expect(await translateChapterHtml(html)).toEqual(
@@ -111,10 +108,9 @@ describe('translateChapterHtml', () => {
   });
 
   it('returns input unchanged when there is nothing to translate', async () => {
-    global.fetch = jest.fn() as any;
     expect(await translateChapterHtml('<hr/> *** <br/>')).toEqual(
       '<hr/> *** <br/>',
     );
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(mockCompleteChat).not.toHaveBeenCalled();
   });
 });

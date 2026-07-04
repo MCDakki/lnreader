@@ -18,6 +18,8 @@ const baseModuleNameMapper = {
   '^@specs/(.*)$': '<rootDir>/specs/$1',
   '^@test-utils$': '<rootDir>/__tests-modules__/test-utils',
   '^@env$': '<rootDir>/src/generated/build-info',
+  // llama.rn needs a native JSI runtime; mock it out in tests
+  '^llama\\.rn$': '<rootDir>/__mocks__/llama.rn.js',
   // Mock static assets
   '\\.(jpg|jpeg|png|gif|webp|svg)$': '<rootDir>/__mocks__/fileMock.js',
 };
