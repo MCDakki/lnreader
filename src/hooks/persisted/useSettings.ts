@@ -127,6 +127,16 @@ export interface ChapterGeneralSettings {
   translationModel: string;
   translationTargetLanguage: string;
   webviewScraperFallback: boolean;
+
+  /**
+   * Auto-healing LLM scraper (on-device llama.rn engine)
+   */
+
+  llmScraper: boolean;
+  /** Absolute path to a GGUF model; '' = auto-detect in /Models. */
+  llmModelPath: string;
+  /** llama.rn n_ctx; clamped to >= 4096 so sanitized chapters fit. */
+  llmContextSize: number;
 }
 
 export interface ReaderTheme {
@@ -228,6 +238,9 @@ export const initialChapterGeneralSettings: ChapterGeneralSettings = {
   translationModel: 'qwen3:4b',
   translationTargetLanguage: 'English',
   webviewScraperFallback: true,
+  llmScraper: true,
+  llmModelPath: '',
+  llmContextSize: 8192,
 };
 
 export const initialChapterReaderSettings: ChapterReaderSettings = {

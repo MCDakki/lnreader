@@ -486,7 +486,8 @@
       "keepScreenOn": "Keep screen on",
       "volumeButtonsScroll": "Volume button scrolling",
       "autoTranslate": "Auto-translate (AI)",
-      "webviewFallback": "WebView fallback scraper"
+      "webviewFallback": "WebView fallback scraper",
+      "llmScraper": "AI scraper (local LLM)"
     },
     "drawer": {
       "scrollToBottom": "Scroll to bottom",

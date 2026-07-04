@@ -122,6 +122,11 @@ export interface Plugin extends PluginItem {
   ) => Promise<NovelItem[]>;
   parseNovel: (novelPath: string) => Promise<SourceNovel>;
   parsePage?: (novelPath: string, page: string) => Promise<SourcePage>;
+  /**
+   * @deprecated Selector-based chapter extraction is superseded by the
+   * auto-healing LLM scraper (`@services/scraper/llmScraper`). Only the
+   * fallback path in `@services/plugin/fetch` may call this.
+   */
   parseChapter: (chapterPath: string) => Promise<string>;
   searchNovels: (searchTerm: string, pageNo: number) => Promise<NovelItem[]>;
   resolveUrl?: (path: string, isNovel?: boolean) => string;

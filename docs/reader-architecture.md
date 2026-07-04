@@ -104,23 +104,35 @@ navigation.navigate('ReaderStack', {
 4. Adjacent chapters are pre-fetched into cache (lines 193–198).
 5. Raw text passes through `sanitizeChapterText()` then `setChapterText()` (lines 203–210).
 
-#### Plugin layer — `src/services/plugin/fetch.ts`
+#### Fetch layer — `src/services/plugin/fetch.ts` (LLM scraper first)
+
+`fetchChapter` is the app-wide routing point. Primary path is the
+**auto-healing LLM scraper**; the selector-based plugin extraction is
+**deprecated** and only runs as fallback:
 
 ```ts
-// lines 13–19
 export const fetchChapter = async (pluginId: string, chapterPath: string) => {
-  const plugin = getPlugin(pluginId);
-  let chapterText = `Unknown plugin: ${pluginId}`;
-  if (plugin) {
-    chapterText = await plugin.parseChapter(chapterPath);
+  if (isLlmScraperEnabled()) {
+    try {
+      return await fetchChapterViaLlm(resolveUrl(pluginId, chapterPath));
+    } catch {
+      /* fall through to the deprecated selector path */
+    }
   }
-  return chapterText;
+  return fetchChapterWithPlugin(pluginId, chapterPath); // @deprecated
 };
 ```
 
-- `getPlugin()` — `src/plugins/pluginManager.ts` (lines 161–177): loads extension JS from `{PLUGIN_STORAGE}/{pluginId}/index.js`.
-- Plugin contract — `src/plugins/types/index.ts` (line 125): `parseChapter(chapterPath: string): Promise<string>` returns raw HTML.
-- Downloads use the same plugin path: `src/services/download/downloadChapter.ts` (line 89) → writes sanitized HTML to disk as `index.html`.
+LLM scraper pipeline (`src/services/scraper/llmScraper.ts`):
+
+1. `fetchSanitizedChapterHtml` (`src/services/scraper/htmlFetcher.ts`) — GET the chapter URL, cheerio-strip `<script>/<style>/<nav>/<header>/<footer>/<aside>/<svg>` (and other non-content tags), drop all attributes/comments, cap length to the model's context budget.
+2. `parseChapterWithLlm` (`src/services/scraper/llmChapterParser.ts`) — feed the sanitized HTML to the on-device llama.rn engine (`src/services/llm/llamaEngine.ts`, GGUF model from `{ROOT_STORAGE}/Models/`, `n_ctx >= 4096`), grammar-constrained JSON output, defensive `JSON.parse` wrapper → `{ title, content: string[] }`.
+3. `parsedChapterToHtml` — escape + wrap into `<h1>/<p>` HTML that re-enters the normal pipeline (sanitize → state → WebView).
+
+Legacy path:
+- `getPlugin()` — `src/plugins/pluginManager.ts`: loads extension JS from `{PLUGIN_STORAGE}/{pluginId}/index.js`.
+- Plugin contract — `src/plugins/types/index.ts`: `parseChapter(chapterPath: string): Promise<string>` returns raw HTML (**deprecated**).
+- Downloads route through the same `fetchChapter`: `src/services/download/downloadChapter.ts` → writes sanitized HTML to disk as `index.html`.
 
 #### Sanitization — `src/screens/reader/utils/sanitizeChapterText.ts`
 

@@ -20,6 +20,16 @@ jest.mock('@specs/NativeFile', () => ({
   },
 }));
 
+// llama.rn is a TurboModule; tests never run real inference.
+jest.mock('llama.rn', () => ({
+  __esModule: true,
+  initLlama: jest.fn(async () => ({
+    completion: jest.fn(async () => ({ text: '{}' })),
+    release: jest.fn(async () => {}),
+  })),
+  releaseAllLlama: jest.fn(async () => {}),
+}));
+
 jest.mock('@specs/NativeEpub', () => ({
   __esModule: true,
   default: {

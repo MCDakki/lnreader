@@ -102,3 +102,6 @@ src/generated/**/*
 
 # TypeScript
 *.tsbuildinfo
+
+# llama.rn build step copies Hexagon DSP libraries into app assets
+android/app/src/main/assets/ggml-hexagon/

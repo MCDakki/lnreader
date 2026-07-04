@@ -405,6 +405,7 @@ export interface StringMap {
   'readerScreen.bottomSheet.volumeButtonsScroll': 'string';
   'readerScreen.bottomSheet.autoTranslate': 'string';
   'readerScreen.bottomSheet.webviewFallback': 'string';
+  'readerScreen.bottomSheet.llmScraper': 'string';
   'readerScreen.drawer.scrollToBottom': 'string';
   'readerScreen.drawer.scrollToCurrentChapter': 'string';
   'readerScreen.drawer.scrollToTop': 'string';
