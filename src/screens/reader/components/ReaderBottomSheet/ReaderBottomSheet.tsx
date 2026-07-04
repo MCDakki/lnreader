@@ -96,6 +96,7 @@ const GeneralTab: React.FC = React.memo(() => {
       { key: 'keepScreenOn', label: 'keepScreenOn' },
       { key: 'autoTranslate', label: 'autoTranslate' },
       { key: 'webviewScraperFallback', label: 'webviewFallback' },
+      { key: 'llmScraper', label: 'llmScraper' },
     ],
     [],
   );

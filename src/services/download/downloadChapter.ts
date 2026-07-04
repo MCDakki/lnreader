@@ -3,6 +3,7 @@ import { NOVEL_STORAGE } from '@utils/Storages';
 import { Plugin } from '@plugins/types';
 import { downloadFile } from '@plugins/helpers/fetch';
 import { getPlugin } from '@plugins/pluginManager';
+import { fetchChapter } from '@services/plugin/fetch';
 import { getString } from '@strings/translations';
 import { getChapter } from '@database/queries/ChapterQueries';
 import { sleep } from '@utils/sleep';
@@ -86,7 +87,10 @@ export const downloadChapter = async (
   if (!plugin) {
     throw new Error(getString('downloadScreen.pluginNotFound'));
   }
-  const chapterText = await plugin.parseChapter(chapter.path);
+  // Route downloads through the same LLM-scraper-first pipeline as
+  // the reader (fetchChapter falls back to the deprecated plugin
+  // extraction internally).
+  const chapterText = await fetchChapter(novel.pluginId, chapter.path);
   if (chapterText && chapterText.length) {
     await downloadFiles(chapterText, plugin, novel.id, chapter.id);
 
