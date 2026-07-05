@@ -14,5 +14,6 @@ export { default as usePlugins } from './usePlugins';
 export { getTracker, useTracker } from './useTracker';
 export { useTrackedNovel } from './useTrackedNovel';
 export { deleteCachedNovels } from './useNovel';
+export { default as useBatchTranslation } from './useBatchTranslation';
 export { default as useDownload } from './useDownload';
 export { default as useUserAgent } from './useUserAgent';

@@ -61,6 +61,44 @@ const downloadFiles = async (
   NativeFile.writeFile(folder + '/index.html', loadedCheerio.html());
 };
 
+/**
+ * Ensure a chapter's content exists on disk and return it.
+ *
+ * Already-downloaded chapters are read straight from their persisted
+ * `index.html` (img srcs already rewritten to `file://`). Otherwise
+ * the chapter is fetched through the LLM-scraper-first pipeline,
+ * persisted (images + index.html) and marked downloaded — the same
+ * path a regular download takes.
+ */
+export const ensureChapterHtml = async (
+  chapter: { id: number; novelId: number; path: string; isDownloaded: boolean | null },
+  novel: { id: number; pluginId: string },
+  plugin: Plugin,
+): Promise<string> => {
+  const indexPath = `${NOVEL_STORAGE}/${plugin.id}/${novel.id}/${chapter.id}/index.html`;
+  if (chapter.isDownloaded && NativeFile.exists(indexPath)) {
+    return NativeFile.readFile(indexPath);
+  }
+
+  // Route downloads through the same LLM-scraper-first pipeline as
+  // the reader (fetchChapter falls back to the deprecated plugin
+  // extraction internally).
+  const chapterText = await fetchChapter(novel.pluginId, chapter.path);
+  if (!chapterText || !chapterText.length) {
+    throw new Error(getString('downloadScreen.chapterEmptyOrScrapeError'));
+  }
+  await downloadFiles(chapterText, plugin, novel.id, chapter.id);
+
+  await dbManager.write(async tx => {
+    tx.update(chapterSchema)
+      .set({ isDownloaded: true })
+      .where(eq(chapterSchema.id, chapter.id))
+      .run();
+  });
+
+  return NativeFile.readFile(indexPath);
+};
+
 export const downloadChapter = async (
   { chapterId }: { chapterId: number },
   setMeta: (
@@ -87,24 +125,8 @@ export const downloadChapter = async (
   if (!plugin) {
     throw new Error(getString('downloadScreen.pluginNotFound'));
   }
-  // Route downloads through the same LLM-scraper-first pipeline as
-  // the reader (fetchChapter falls back to the deprecated plugin
-  // extraction internally).
-  const chapterText = await fetchChapter(novel.pluginId, chapter.path);
-  if (chapterText && chapterText.length) {
-    await downloadFiles(chapterText, plugin, novel.id, chapter.id);
-
-    await dbManager.write(async tx => {
-      tx.update(chapterSchema)
-        .set({ isDownloaded: true })
-        .where(eq(chapterSchema.id, chapter.id))
-        .run();
-    });
-
-    await sleep(getChapterDownloadCooldownMs());
-  } else {
-    throw new Error(getString('downloadScreen.chapterEmptyOrScrapeError'));
-  }
+  await ensureChapterHtml(chapter, novel, plugin);
+  await sleep(getChapterDownloadCooldownMs());
 
   setMeta(meta => ({
     ...meta,

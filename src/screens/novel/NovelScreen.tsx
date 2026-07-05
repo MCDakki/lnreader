@@ -7,7 +7,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { Portal, Appbar, Snackbar } from 'react-native-paper';
-import { useDownload, useTheme } from '@hooks/persisted';
+import { useBatchTranslation, useDownload, useTheme } from '@hooks/persisted';
 import JumpToChapterModal from './components/JumpToChapterModal';
 import { Actionbar } from '../../components/Actionbar/Actionbar';
 import EditInfoModal from './components/EditInfoModal';
@@ -24,6 +24,7 @@ import { resolveUrl } from '@services/plugin/fetch';
 import {
   getAllUndownloadedAndUnreadChapters,
   getAllUndownloadedChapters,
+  getUnreadNovelChapters,
   updateChapterProgressByIds,
 } from '@database/queries/ChapterQueries';
 import { MaterialDesignIconName } from '@type/icon';
@@ -49,6 +50,7 @@ const Novel = ({ route, navigation }: NovelScreenProps) => {
 
   const theme = useTheme();
   const { downloadChapters } = useDownload();
+  const { translateChapters } = useBatchTranslation();
 
   const [selected, setSelected] = useState<ChapterInfo[]>([]);
   const [editInfoModal, showEditInfoModal] = useState(false);
@@ -93,6 +95,18 @@ const Novel = ({ route, navigation }: NovelScreenProps) => {
     },
     [chapters, downloadChapters, novel],
   );
+
+  const translateUnreadChs = useCallback(async () => {
+    if (!novel) {
+      return;
+    }
+    // All unread chapters — already-downloaded ones are translated in
+    // place, the rest are scraped first by the background worker.
+    const unreadChapters = await getUnreadNovelChapters(novel.id);
+    if (unreadChapters.length > 0) {
+      translateChapters(novel, unreadChapters);
+    }
+  }, [novel, translateChapters]);
 
   const deleteChs = useCallback(() => {
     deleteChapters(chapters.filter(c => c.isDownloaded));
@@ -262,6 +276,7 @@ const Novel = ({ route, navigation }: NovelScreenProps) => {
               novel={novel}
               deleteChapters={deleteChs}
               downloadChapters={downloadChs}
+              translateUnreadChapters={translateUnreadChs}
               showEditInfoModal={showEditInfoModal}
               setCustomNovelCover={setCustomNovelCover}
               downloadCustomChapterModal={openDlChapterModal}

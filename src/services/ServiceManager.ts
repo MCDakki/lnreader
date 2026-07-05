@@ -15,6 +15,7 @@ import {
 import { createBackup, restoreBackup } from './backup/local';
 import { migrateNovel, MigrateNovelData } from './migrate/migrateNovel';
 import { downloadChapter } from './download/downloadChapter';
+import { translateChapter } from './translation/translateChapterTask';
 import { askForPostNotificationsPermission } from '@utils/askForPostNoftificationsPermission';
 
 type taskNames =
@@ -27,7 +28,8 @@ type taskNames =
   | 'LOCAL_BACKUP'
   | 'LOCAL_RESTORE'
   | 'MIGRATE_NOVEL'
-  | 'DOWNLOAD_CHAPTER';
+  | 'DOWNLOAD_CHAPTER'
+  | 'TRANSLATE_CHAPTER';
 
 export type BackgroundTask =
   | {
@@ -51,11 +53,22 @@ export type BackgroundTask =
   | { name: 'LOCAL_BACKUP' }
   | { name: 'LOCAL_RESTORE' }
   | { name: 'MIGRATE_NOVEL'; data: MigrateNovelData }
-  | DownloadChapterTask;
+  | DownloadChapterTask
+  | TranslateChapterTask;
 export type DownloadChapterTask = {
   name: 'DOWNLOAD_CHAPTER';
   data: { chapterId: number; novelName: string; chapterName: string };
 };
+export type TranslateChapterTask = {
+  name: 'TRANSLATE_CHAPTER';
+  data: { chapterId: number; novelName: string; chapterName: string };
+};
+
+/** Chapter-queue tasks: many per queue, per-chapter notification text. */
+const CHAPTER_QUEUE_TASKS: Array<BackgroundTask['name']> = [
+  'DOWNLOAD_CHAPTER',
+  'TRANSLATE_CHAPTER',
+];
 
 export type BackgroundTaskMetadata = {
   name: string;
@@ -101,9 +114,12 @@ export default class ServiceManager {
       return false;
     }
     return (
-      ['DOWNLOAD_CHAPTER', 'IMPORT_EPUB', 'MIGRATE_NOVEL'] as Array<
-        BackgroundTask['name']
-      >
+      [
+        'DOWNLOAD_CHAPTER',
+        'TRANSLATE_CHAPTER',
+        'IMPORT_EPUB',
+        'MIGRATE_NOVEL',
+      ] as Array<BackgroundTask['name']>
     ).includes(task.name);
   }
 
@@ -146,7 +162,9 @@ export default class ServiceManager {
 
     if (
       taskList[0].meta?.isRunning &&
-      taskList[0].task?.name !== 'DOWNLOAD_CHAPTER'
+      // Chapter-queue tasks own their notification ("X / N" set in
+      // executeTask); per-chapter meta updates must not clobber it.
+      !CHAPTER_QUEUE_TASKS.includes(taskList[0].task?.name)
     ) {
       const now = Date.now();
       if (now - this.lastNotifUpdate < 1000) {
@@ -183,16 +201,17 @@ export default class ServiceManager {
     setMMKVObject(this.STORE_KEY, taskList);
   }
 
-  //gets the progress bar for download chapters notification
+  // Position of a chapter-queue task within its contiguous run of
+  // same-novel tasks, for "X / N" notification progress.
   getProgressForNotification(
     currentTask: QueuedBackgroundTask,
     startingTasks: QueuedBackgroundTask[],
-  ) {
+  ): { value: number; index: number; count: number } | null {
     let i = null;
     let count = 0;
     for (const task of startingTasks) {
       if (
-        task.task?.name === 'DOWNLOAD_CHAPTER' &&
+        task.task?.name === currentTask.task?.name &&
         task.meta?.name === currentTask.meta?.name
       ) {
         if (task.id === currentTask.id) {
@@ -209,7 +228,7 @@ export default class ServiceManager {
     if (i === null) {
       return null;
     }
-    return (i / count) * 100;
+    return { value: (i / count) * 100, index: i, count };
   }
 
   async executeTask(
@@ -221,17 +240,20 @@ export default class ServiceManager {
       return;
     }
 
-    const progress =
-      task.task.name === 'DOWNLOAD_CHAPTER'
-        ? this.getProgressForNotification(task, startingTasks)
-        : null;
+    const progress = CHAPTER_QUEUE_TASKS.includes(task.task.name)
+      ? this.getProgressForNotification(task, startingTasks)
+      : null;
     await BackgroundService.updateNotification({
       taskTitle: task.meta?.name || 'Unknown Task',
-      taskDesc: task.meta?.progressText ?? '',
+      taskDesc: progress
+        ? `${task.meta?.progressText ?? ''} (${progress.index + 1}/${
+            progress.count
+          })`
+        : task.meta?.progressText ?? '',
       progressBar: {
         indeterminate: progress === null,
         max: 100,
-        value: progress == null ? 0 : progress,
+        value: progress === null ? 0 : progress.value,
       },
     });
     this.lastNotifUpdate = Date.now();
@@ -258,6 +280,8 @@ export default class ServiceManager {
         return migrateNovel(task.task.data, this.setMeta.bind(this));
       case 'DOWNLOAD_CHAPTER':
         return downloadChapter(task.task.data, this.setMeta.bind(this));
+      case 'TRANSLATE_CHAPTER':
+        return translateChapter(task.task.data, this.setMeta.bind(this));
     }
   }
 
@@ -275,6 +299,7 @@ export default class ServiceManager {
       'LOCAL_RESTORE': 0,
       'MIGRATE_NOVEL': 0,
       'DOWNLOAD_CHAPTER': 0,
+      'TRANSLATE_CHAPTER': 0,
     };
     const startingTasks = manager.getTaskList();
     const tasksSet = new Set(startingTasks.map(t => t.id));
@@ -340,6 +365,10 @@ export default class ServiceManager {
         return `${getString('notifications.DOWNLOAD_CHAPTER')}: ${
           task.data?.novelName || ''
         }`;
+      case 'TRANSLATE_CHAPTER':
+        return `${getString('notifications.TRANSLATE_CHAPTER')}: ${
+          task.data?.novelName || ''
+        }`;
       case 'IMPORT_EPUB':
         return `${getString('notifications.IMPORT_EPUB')}: ${
           task.data?.filename || ''
@@ -389,10 +418,10 @@ export default class ServiceManager {
               name: this.getTaskName(backgroundTask),
               isRunning: false,
               progress: undefined,
-              progressText:
-                backgroundTask.name === 'DOWNLOAD_CHAPTER'
-                  ? (backgroundTask as DownloadChapterTask).data?.chapterName
-                  : undefined,
+              progressText: CHAPTER_QUEUE_TASKS.includes(backgroundTask.name)
+                ? (backgroundTask as DownloadChapterTask | TranslateChapterTask)
+                    .data?.chapterName
+                : undefined,
             },
             id: makeId(),
           } as QueuedBackgroundTask;
@@ -427,7 +456,7 @@ export default class ServiceManager {
           isRunning: false,
           progress: undefined,
           progressText:
-            task.name === 'DOWNLOAD_CHAPTER'
+            task.name === 'DOWNLOAD_CHAPTER' || task.name === 'TRANSLATE_CHAPTER'
               ? task.data?.chapterName
               : undefined,
         },

@@ -351,6 +351,7 @@ export interface StringMap {
   'novelScreen.download.next10': 'string';
   'novelScreen.download.next5': 'string';
   'novelScreen.download.unread': 'string';
+  'novelScreen.download.translateUnread': 'string';
   'novelScreen.edit.addTag': 'string';
   'novelScreen.edit.author': 'string';
   'novelScreen.edit.cover': 'string';
@@ -479,4 +480,5 @@ export interface StringMap {
   'notifications.LOCAL_RESTORE': 'string';
   'notifications.MIGRATE_NOVEL': 'string';
   'notifications.DOWNLOAD_CHAPTER': 'string';
+  'notifications.TRANSLATE_CHAPTER': 'string';
 }

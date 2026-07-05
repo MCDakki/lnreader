@@ -76,6 +76,7 @@ const NovelAppbar = ({
   theme,
   isLocal,
   downloadChapters,
+  translateUnreadChapters,
   deleteChapters,
   showEditInfoModal,
   downloadCustomChapterModal,
@@ -89,6 +90,7 @@ const NovelAppbar = ({
   theme: ThemeColors;
   isLocal: boolean | undefined;
   downloadChapters: (amount: number | 'all' | 'unread') => void;
+  translateUnreadChapters: () => void;
   deleteChapters: () => void;
   showEditInfoModal: React.Dispatch<React.SetStateAction<boolean>>;
   downloadCustomChapterModal: () => void;
@@ -160,6 +162,10 @@ const NovelAppbar = ({
         onPress: () => downloadChapters('unread'),
       },
       {
+        label: getString('novelScreen.download.translateUnread'),
+        onPress: () => translateUnreadChapters(),
+      },
+      {
         label: getString('common.all'),
         onPress: () => downloadChapters('all'),
       },
@@ -168,7 +174,12 @@ const NovelAppbar = ({
         onPress: () => deleteChapters(),
       },
     ];
-  }, [deleteChapters, downloadChapters, downloadCustomChapterModal]);
+  }, [
+    deleteChapters,
+    downloadChapters,
+    downloadCustomChapterModal,
+    translateUnreadChapters,
+  ]);
 
   const extraMenuItems = useMemo(
     () => [
