@@ -144,6 +144,27 @@ export const completeJson = async (
   return result.text;
 };
 
+/**
+ * Run a plain-text chat completion on the local model (no JSON
+ * grammar). Used by the local translation engine, where the output is
+ * marker-delimited prose rather than a JSON object.
+ */
+export const completeText = async (
+  messages: RNLlamaOAICompatibleMessage[],
+  maxTokens: number = 2048,
+): Promise<string> => {
+  const llama = await getLlamaContext();
+  const result = await llama.completion({
+    messages,
+    temperature: 0.1,
+    top_p: 0.9,
+    n_predict: maxTokens,
+    jinja: true,
+    enable_thinking: false,
+  });
+  return result.text;
+};
+
 /** Free the model and its KV cache (e.g. on memory pressure). */
 export const releaseLlamaContext = async (): Promise<void> => {
   if (context) {

@@ -420,7 +420,8 @@
       "next": "Next chapter",
       "next10": "Next 10 chapter",
       "next5": "Next 5 chapter",
-      "unread": "Unread"
+      "unread": "Unread",
+      "translateUnread": "Translate unread"
     },
     "edit": {
       "addTag": "Add Tag",
@@ -577,6 +578,7 @@
     "LOCAL_BACKUP": "Local Backup",
     "LOCAL_RESTORE": "Local Restore",
     "MIGRATE_NOVEL": "Migrating Novel",
-    "DOWNLOAD_CHAPTER": "Downloading Chapter"
+    "DOWNLOAD_CHAPTER": "Downloading Chapter",
+    "TRANSLATE_CHAPTER": "Translating Chapter"
   }
 }

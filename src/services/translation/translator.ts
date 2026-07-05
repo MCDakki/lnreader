@@ -41,10 +41,10 @@ export const DEFAULT_TRANSLATION_CONFIG: TranslationConfig = {
   timeoutMs: 120_000,
 };
 
-const SEGMENT_MARKER = (n: number) => `<<<SEG_${n}>>>`;
+export const SEGMENT_MARKER = (n: number) => `<<<SEG_${n}>>>`;
 const SEGMENT_MARKER_RE = /<<<SEG_(\d+)>>>/g;
 
-const buildSystemPrompt = (targetLanguage: string) =>
+export const buildSystemPrompt = (targetLanguage: string) =>
   `You are a machine translation engine embedded in an e-book reader. Translate every segment of the user's input into ${targetLanguage}.
 
 STRICT OUTPUT RULES — follow ALL of them:
@@ -58,7 +58,7 @@ STRICT OUTPUT RULES — follow ALL of them:
 const isTranslatable = (text: string): boolean => /\p{L}/u.test(text);
 
 /** Strip reasoning tags (Qwen3), stray code fences and outer whitespace. */
-const cleanModelOutput = (raw: string): string =>
+export const cleanModelOutput = (raw: string): string =>
   raw
     .replace(/<think>[\s\S]*?<\/think>/gi, '')
     .replace(/^\s*```[a-z]*\s*\n?/i, '')

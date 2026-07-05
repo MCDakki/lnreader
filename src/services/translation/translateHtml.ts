@@ -3,20 +3,23 @@ import {
   translateParagraphs,
 } from '@services/translation/translator';
 
+/** Translates an array of text segments, preserving length and order. */
+export type ParagraphTranslator = (texts: string[]) => Promise<string[]>;
+
 /**
  * Translate the text nodes of a sanitized chapter HTML string while
  * preserving every tag, attribute and inline structure exactly.
  *
  * The HTML is tokenized into alternating tag/text tokens; only text
- * tokens containing letters are sent to the API (as the paragraph
- * array), then spliced back in place with their original surrounding
- * whitespace. If the API fails, `translateParagraphs` returns the
- * original strings, so the reassembled HTML equals the input.
+ * tokens containing letters are handed to `translate` (as the
+ * paragraph array), then spliced back in place with their original
+ * surrounding whitespace. The translator must return the original
+ * strings for segments it could not translate, so the reassembled
+ * HTML degrades to the input rather than breaking.
  */
-export const translateChapterHtml = async (
+export const translateChapterHtmlWith = async (
   html: string,
-  overrides?: Partial<TranslationConfig>,
-  signal?: AbortSignal,
+  translate: ParagraphTranslator,
 ): Promise<string> => {
   // Split into tags (captured) and text-between-tags.
   const tokens = html.split(/(<[^>]*>)/g);
@@ -39,7 +42,7 @@ export const translateChapterHtml = async (
     return html;
   }
 
-  const translated = await translateParagraphs(texts, overrides, signal);
+  const translated = await translate(texts);
 
   textTokenIndices.forEach((tokenIndex, i) => {
     const [leading, trailing] = whitespace[i];
@@ -48,3 +51,13 @@ export const translateChapterHtml = async (
 
   return tokens.join('');
 };
+
+/** Translate chapter HTML through the remote (Ollama/OpenAI) engine. */
+export const translateChapterHtml = (
+  html: string,
+  overrides?: Partial<TranslationConfig>,
+  signal?: AbortSignal,
+): Promise<string> =>
+  translateChapterHtmlWith(html, texts =>
+    translateParagraphs(texts, overrides, signal),
+  );

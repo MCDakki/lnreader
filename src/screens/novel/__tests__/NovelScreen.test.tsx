@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import NovelScreen from '../NovelScreen';
 
 const mockDownloadChapters = jest.fn();
+const mockTranslateChapters = jest.fn();
 const mockUpdateChapterProgressByIds = jest.fn();
 const mockUseNovelValue = jest.fn();
 const mockUseNovelActions = jest.fn();
@@ -17,6 +18,9 @@ jest.mock('@hooks/persisted', () => ({
   }),
   useDownload: () => ({
     downloadChapters: mockDownloadChapters,
+  }),
+  useBatchTranslation: () => ({
+    translateChapters: mockTranslateChapters,
   }),
 }));
 

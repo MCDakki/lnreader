@@ -6,6 +6,7 @@ import {
   useChapterGeneralSettings,
 } from '@hooks/persisted/useSettings';
 import { translateChapterHtml } from '@services/translation/translateHtml';
+import { isTranslatedHtml } from '@services/translation/translatedMarker';
 
 /**
  * In-memory cache of translated chapters, so toggling the setting or
@@ -61,7 +62,10 @@ export default function useChapterTextInterceptor(
     // Invalidate any in-flight job whenever inputs change.
     const job = ++jobRef.current;
 
-    if (!autoTranslate || !chapterText) {
+    // Chapters already translated by the batch queue carry a marker
+    // (data-lnreader-translated) that survives sanitization — never
+    // re-translate those.
+    if (!autoTranslate || !chapterText || isTranslatedHtml(chapterText)) {
       setTranslating(false);
       return;
     }
@@ -105,6 +109,7 @@ export default function useChapterTextInterceptor(
 
   const translationReady =
     autoTranslate &&
+    !isTranslatedHtml(chapterText) &&
     translated?.chapterId === chapter.id &&
     translated.source === chapterText;
 
