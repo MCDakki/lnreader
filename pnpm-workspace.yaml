@@ -3,6 +3,7 @@ nodeLinker: hoisted
 onlyBuiltDependencies:
   - better-sqlite3
   - esbuild
+  - llama.rn
   - protobufjs
 
 patchedDependencies:
