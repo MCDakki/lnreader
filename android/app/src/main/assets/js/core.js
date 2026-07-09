@@ -111,6 +111,36 @@ window.reader = new (function () {
     }
   };
 
+  // Hide the native top bar when scrolling down and reveal it when scrolling
+  // up (or near the very top) for a distraction-free reading experience.
+  this._lastScrollY = 0;
+  this._lastScrollDir = null;
+  const SCROLL_DIR_THRESHOLD = 8;
+  window.addEventListener(
+    'scroll',
+    () => {
+      if (this.generalSettings.val.pageReader) {
+        return;
+      }
+      const y = window.scrollY;
+      const delta = y - this._lastScrollY;
+      if (Math.abs(delta) < SCROLL_DIR_THRESHOLD) {
+        return;
+      }
+      let dir = delta > 0 ? 'down' : 'up';
+      // Always keep the bar available at the very top of the chapter.
+      if (y <= SCROLL_DIR_THRESHOLD) {
+        dir = 'up';
+      }
+      this._lastScrollY = y;
+      if (dir !== this._lastScrollDir) {
+        this._lastScrollDir = dir;
+        this.post({ type: 'scroll', data: { direction: dir } });
+      }
+    },
+    { passive: true },
+  );
+
   if (DEBUG) {
     // eslint-disable-next-line no-global-assign, no-new-object
     console = new Object();

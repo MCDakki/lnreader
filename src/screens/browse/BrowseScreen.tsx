@@ -28,6 +28,10 @@ const BrowseScreen = ({ navigation }: BrowseScreenProps) => {
     () =>
       [
         {
+          iconName: 'web-plus',
+          onPress: () => navigation.navigate('AddCustomSource'),
+        },
+        {
           iconName: 'book-search',
           onPress: () => navigation.navigate('GlobalSearchScreen', {}),
         },

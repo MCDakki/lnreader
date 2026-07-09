@@ -20,6 +20,7 @@ export type RootStackParamList = {
   BrowseAL: undefined;
   BrowseSettings: undefined;
   GlobalSearchScreen: { searchText?: string };
+  AddCustomSource: undefined;
   Migration: undefined;
   SourceNovels: { pluginId: string };
   MigrateNovel: { novel: NovelInfo };
@@ -136,6 +137,10 @@ export type BrowseSettingsScreenProp = StackScreenProps<
 export type GlobalSearchScreenProps = StackScreenProps<
   RootStackParamList,
   'GlobalSearchScreen'
+>;
+export type AddCustomSourceScreenProps = StackScreenProps<
+  RootStackParamList,
+  'AddCustomSource'
 >;
 export type MigrationScreenProps = StackScreenProps<
   RootStackParamList,

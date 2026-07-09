@@ -22,6 +22,7 @@ import MoreStack from './MoreStack';
 
 import BrowseSourceScreen from '../screens/BrowseSourceScreen/BrowseSourceScreen';
 import GlobalSearchScreen from '../screens/GlobalSearchScreen/GlobalSearchScreen';
+import AddCustomSourceScreen from '../screens/browse/AddCustomSourceScreen';
 import Migration from '../screens/browse/migration/Migration';
 import SourceNovels from '../screens/browse/SourceNovels';
 import MigrateNovel from '../screens/browse/migration/MigrationNovels';
@@ -119,6 +120,10 @@ const MainNavigator = () => {
             <Stack.Screen
               name="GlobalSearchScreen"
               component={GlobalSearchScreen}
+            />
+            <Stack.Screen
+              name="AddCustomSource"
+              component={AddCustomSourceScreen}
             />
             <Stack.Screen name="Migration" component={Migration} />
             <Stack.Screen name="SourceNovels" component={SourceNovels} />

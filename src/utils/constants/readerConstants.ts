@@ -6,6 +6,8 @@ export const presetReaderThemes: ReaderTheme[] = [
   { backgroundColor: '#F7DFC6', textColor: '#593100' },
   { backgroundColor: '#dce5e2', textColor: '#000000' },
   { backgroundColor: '#292832', textColor: '#CCCCCC' },
+  // Aurora Slate — deep slate background with high-contrast text.
+  { backgroundColor: '#0F172A', textColor: '#E8EAF0' },
   {
     backgroundColor: '#000000',
     textColor: '#FFFFFFB3',
