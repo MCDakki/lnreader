@@ -7,6 +7,7 @@ import { strawberryDaiquiriTheme } from './strawberry';
 import { takoTheme } from './tako';
 import { catppuccinTheme } from './catppuccin';
 import { yinyangTheme } from './yinyang';
+import { auroraSlate } from './auroraSlate';
 
 /**
  * Exports for MD3 theme system
@@ -25,6 +26,7 @@ export const lightThemes = [
   takoTheme.light,
   catppuccinTheme.light,
   yinyangTheme.light,
+  auroraSlate.light,
 ].map((theme, i) => ({ ...theme, id: 100 + i }));
 export const darkThemes = [
   defaultTheme.dark,
@@ -36,4 +38,5 @@ export const darkThemes = [
   takoTheme.dark,
   catppuccinTheme.dark,
   yinyangTheme.dark,
+  auroraSlate.dark,
 ].map((theme, i) => ({ ...theme, id: 100 + i }));

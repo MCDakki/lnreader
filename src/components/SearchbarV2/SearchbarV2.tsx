@@ -5,6 +5,7 @@ import IconButtonV2 from '../IconButtonV2/IconButtonV2';
 import { ThemeColors } from '../../theme/types';
 import { Menu } from '@components';
 import { MaterialDesignIconName } from '@type/icon';
+import { borderRadius, shadow, spacing } from '@theme/tokens';
 
 export interface RightIcon {
   iconName: MaterialDesignIconName;
@@ -53,18 +54,27 @@ const Searchbar: React.FC<SearcbarProps> = ({
   return (
     <View
       style={[
-        styles.searchbarContainer,
+        styles.searchbarShadow,
         {
           marginTop,
-          backgroundColor: theme.surface2,
+          shadowColor: theme.shadow,
         },
       ]}
     >
-      <Pressable
-        onPress={focusSearchbar}
-        android_ripple={{ color: theme.rippleColor }}
-        style={styles.searchbar}
+      <View
+        style={[
+          styles.searchbarContainer,
+          {
+            backgroundColor: theme.surface2,
+            borderColor: theme.outlineVariant ?? theme.outline,
+          },
+        ]}
       >
+        <Pressable
+          onPress={focusSearchbar}
+          android_ripple={{ color: theme.rippleColor }}
+          style={styles.searchbar}
+        >
         <IconButtonV2
           name={handleBackAction ? 'arrow-left' : leftIcon}
           color={theme.onSurface}
@@ -138,7 +148,8 @@ const Searchbar: React.FC<SearcbarProps> = ({
             ))}
           </Menu>
         ) : null}
-      </Pressable>
+        </Pressable>
+      </View>
     </View>
   );
 };
@@ -159,13 +170,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 8,
   },
+  searchbarShadow: {
+    marginBottom: spacing.md,
+    marginHorizontal: spacing.base,
+    borderRadius: borderRadius.l,
+    zIndex: 1,
+    ...shadow.soft,
+  },
   searchbarContainer: {
-    borderRadius: 28,
-    marginBottom: 12,
-    marginHorizontal: 16,
+    borderRadius: borderRadius.l,
+    borderWidth: StyleSheet.hairlineWidth,
     minHeight: 56,
     overflow: 'hidden',
-    zIndex: 1,
   },
   textInput: {
     flex: 1,

@@ -80,8 +80,11 @@ const GeneralTab: React.FC = React.memo(() => {
     [setChapterGeneralSettings, settings],
   );
 
-  const preferences = useMemo(
+  const preferences = useMemo<
+    { key: string; label: string; premium?: boolean }[]
+  >(
     () => [
+      { key: 'autoTranslate', label: 'autoTranslate', premium: true },
       { key: 'fullScreenMode', label: 'fullscreen' },
       { key: 'autoScroll', label: 'autoscroll' },
       { key: 'verticalSeekbar', label: 'verticalSeekbar' },
@@ -94,7 +97,6 @@ const GeneralTab: React.FC = React.memo(() => {
       { key: 'bionicReading', label: 'bionicReading' },
       { key: 'tapToScroll', label: 'tapToScroll' },
       { key: 'keepScreenOn', label: 'keepScreenOn' },
-      { key: 'autoTranslate', label: 'autoTranslate' },
       { key: 'webviewScraperFallback', label: 'webviewFallback' },
       { key: 'llmScraper', label: 'llmScraper' },
     ],
@@ -102,7 +104,11 @@ const GeneralTab: React.FC = React.memo(() => {
   );
 
   const renderItem = useCallback(
-    ({ item }: { item: { key: string; label: string } }) => (
+    ({
+      item,
+    }: {
+      item: { key: string; label: string; premium?: boolean };
+    }) => (
       <ReaderSheetPreferenceItem
         key={item.key}
         label={getString(
@@ -111,6 +117,8 @@ const GeneralTab: React.FC = React.memo(() => {
         onPress={() => toggleSetting(item.key as keyof typeof settings)} // @ts-ignore
         value={settings[item.key]}
         theme={theme}
+        premium={item.premium}
+        icon={item.premium ? 'translate' : undefined}
       />
     ),
     [settings, theme, toggleSetting],
@@ -120,7 +128,9 @@ const GeneralTab: React.FC = React.memo(() => {
     <BottomSheetFlashList
       data={preferences}
       extraData={[settings]}
-      keyExtractor={(item: { key: string; label: string }) => item.key}
+      keyExtractor={(item: { key: string; label: string; premium?: boolean }) =>
+        item.key
+      }
       renderItem={renderItem}
       estimatedItemSize={60}
     />

@@ -292,6 +292,29 @@ export default function useChapter(
     setHidden(!hidden);
   }, [hidden, setImmersiveMode, showStatusAndNavBar, webViewRef]);
 
+  /**
+   * Reveal the reader chrome when scrolling up and hide it when scrolling
+   * down, keeping the two in sync with the in-WebView toolbar state.
+   */
+  const onScroll = useCallback(
+    (direction: 'up' | 'down') => {
+      if (direction === 'down') {
+        if (!hidden) {
+          webViewRef.current?.injectJavaScript('reader.hidden.val = true');
+          setImmersiveMode();
+          setHidden(true);
+        }
+      } else {
+        if (hidden) {
+          webViewRef.current?.injectJavaScript('reader.hidden.val = false');
+          showStatusAndNavBar();
+          setHidden(false);
+        }
+      }
+    },
+    [hidden, setImmersiveMode, showStatusAndNavBar, webViewRef],
+  );
+
   const navigateChapter = useCallback(
     (position: 'NEXT' | 'PREV') => {
       let nextNavChapter;
@@ -371,6 +394,7 @@ export default function useChapter(
       setHidden,
       saveProgress,
       hideHeader,
+      onScroll,
       navigateChapter,
       refetch,
       recoverFromWebview,
@@ -389,6 +413,7 @@ export default function useChapter(
       setHidden,
       saveProgress,
       hideHeader,
+      onScroll,
       navigateChapter,
       refetch,
       recoverFromWebview,

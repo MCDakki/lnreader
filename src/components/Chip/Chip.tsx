@@ -39,13 +39,15 @@ export default Chip;
 
 const styles = StyleSheet.create({
   chipContainer: {
-    borderRadius: 8,
-    height: 32,
+    borderRadius: 16,
+    height: 34,
     marginEnd: 8,
     overflow: 'hidden',
   },
   label: {
-    fontSize: 14,
+    fontSize: 13.5,
+    fontWeight: '500',
+    letterSpacing: 0.2,
   },
   pressable: {
     alignItems: 'center',

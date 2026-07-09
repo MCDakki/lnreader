@@ -75,7 +75,13 @@ const findThemeById = (
     theme = themeList.find(t => t.id === id);
   }
 
-  return theme ?? themeList[0];
+  // Default fresh installs to the flagship "Aurora Slate" dark palette so the
+  // refreshed design system is the out-of-the-box experience in dark mode.
+  const fallback = isDark
+    ? themeList.find(t => t.name === 'Aurora Slate') ?? themeList[0]
+    : themeList[0];
+
+  return theme ?? fallback;
 };
 
 // transforms legacy theme IDs to new IDs

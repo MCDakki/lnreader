@@ -70,6 +70,7 @@ const WebViewReader: React.FC<WebViewReaderProps> = ({ onPress }) => {
     chapterText: html,
     navigateChapter,
     saveProgress,
+    onScroll,
     nextChapter,
     prevChapter,
     webViewRef,
@@ -370,6 +371,13 @@ const WebViewReader: React.FC<WebViewReaderProps> = ({ onPress }) => {
           case 'hide':
             onPress();
             break;
+          case 'scroll': {
+            const direction = (event.data as { direction?: string })?.direction;
+            if (direction === 'up' || direction === 'down') {
+              onScroll(direction);
+            }
+            break;
+          }
           case 'next':
             nextChapterScreenVisible.current = true;
             if (event.autoStartTTS) {

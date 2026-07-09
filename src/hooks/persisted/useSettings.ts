@@ -244,8 +244,8 @@ export const initialChapterGeneralSettings: ChapterGeneralSettings = {
 };
 
 export const initialChapterReaderSettings: ChapterReaderSettings = {
-  theme: '#292832',
-  textColor: '#CCCCCC',
+  theme: '#0F172A',
+  textColor: '#E8EAF0',
   textSize: 16,
   textAlign: 'left',
   padding: 16,
