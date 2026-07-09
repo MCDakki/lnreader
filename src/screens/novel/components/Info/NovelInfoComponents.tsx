@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
   },
   novelThumbnail: {
     backgroundColor: coverPlaceholderColor,
-    borderRadius: 6,
+    borderRadius: 16,
     height: 150,
     width: 100,
   },
@@ -345,7 +345,9 @@ const styles = StyleSheet.create({
     width: 100,
   },
   novelTitle: {
-    fontSize: 20,
+    fontSize: 23,
+    fontWeight: '700',
+    letterSpacing: 0.15,
   },
   zIndex: { zIndex: 10 },
 });

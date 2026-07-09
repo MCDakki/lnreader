@@ -195,10 +195,10 @@ const styles = StyleSheet.create({
   chapterCardContainer: {
     alignItems: 'center',
     flexDirection: 'row',
-    height: 64,
+    height: 68,
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
   },
   flex1: {
     flex: 1,
@@ -213,13 +213,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   text: {
-    fontSize: 12,
+    fontSize: 12.5,
+    letterSpacing: 0.1,
   },
   textNormal: {
-    fontSize: 14,
+    fontSize: 15,
+    fontWeight: '600',
+    letterSpacing: 0.1,
   },
   textSmall: {
-    fontSize: 12,
+    fontSize: 13,
+    fontWeight: '600',
   },
   titleRow: {
     flexDirection: 'row',

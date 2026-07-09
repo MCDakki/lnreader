@@ -450,7 +450,7 @@ const LibraryScreen = ({ navigation }: LibraryScreenProps) => {
   );
 
   return (
-    <SafeAreaView excludeBottom>
+    <SafeAreaView excludeBottom style={styles.container}>
       <SearchbarV2
         searchText={searchText}
         clearSearchbar={clearSearchbar}
@@ -536,6 +536,9 @@ export default React.memo(LibraryScreen);
 
 function createStyles(theme: ThemeColors) {
   return StyleSheet.create({
+    container: {
+      backgroundColor: theme.background,
+    },
     badgeCtn: {
       borderRadius: 50,
       marginStart: 4,

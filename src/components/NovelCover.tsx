@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   linearGradient: {
-    borderRadius: 4,
+    borderRadius: 12,
   },
   listView: {
     alignItems: 'center',
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   },
 
   opac: {
-    borderRadius: 4,
+    borderRadius: 12,
     flex: 1,
     padding: 4.8,
   },
@@ -440,19 +440,20 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   standardBorderRadius: {
-    borderRadius: 4,
+    borderRadius: 12,
   },
   standardNovelCover: {
-    borderRadius: 6,
+    borderRadius: 16,
     overflow: 'hidden',
   },
   title: {
     fontFamily: 'pt-sans-bold',
     fontSize: 14,
+    letterSpacing: 0.1,
     padding: 8,
   },
   titleContainer: {
-    borderRadius: 4,
+    borderRadius: 12,
     flex: 1,
   },
   unreadBadge: {
