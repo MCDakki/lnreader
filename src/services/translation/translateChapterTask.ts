@@ -109,18 +109,27 @@ export const translateChapter = async (
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
       const sourceHtml = await ensureChapterHtml(chapter, novel, plugin);
-      const { html, translatedCount } = await translateChapterHtmlLocal(
-        sourceHtml,
-        targetLanguage,
-        (done, total) =>
-          setMeta(meta => ({
-            ...meta,
-            progress: done / total,
-            progressText: `${data.chapterName} (${done}/${total})`,
-          })),
-      );
-      if (translatedCount === 0) {
-        throw new Error('No segments translated');
+      const { html, translatedCount, totalCount } =
+        await translateChapterHtmlLocal(
+          sourceHtml,
+          targetLanguage,
+          (done, total) =>
+            setMeta(meta => ({
+              ...meta,
+              progress: done / total,
+              progressText: `${data.chapterName} (${done}/${total})`,
+            })),
+        );
+      // Anything short of a full translation must not be persisted: the
+      // marker would freeze the untranslated batches in place, since
+      // both this task and the reader's Auto-Translate skip marked HTML.
+      if (totalCount === 0) {
+        throw new Error('Chapter has no translatable text');
+      }
+      if (translatedCount < totalCount) {
+        throw new Error(
+          `Only ${translatedCount}/${totalCount} segments translated`,
+        );
       }
       if (!NativeFile.exists(sourcePath)) {
         NativeFile.writeFile(sourcePath, sourceHtml);

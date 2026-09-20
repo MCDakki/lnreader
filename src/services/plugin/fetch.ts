@@ -42,9 +42,16 @@ export const fetchChapter = async (pluginId: string, chapterPath: string) => {
   if (isLlmScraperEnabled()) {
     try {
       return await fetchChapterViaLlm(resolveUrl(pluginId, chapterPath));
-    } catch {
-      // fall through to the deprecated selector path — a stale
-      // extraction attempt still beats an error screen
+    } catch (error) {
+      // Fall through to the deprecated selector path — a stale
+      // extraction attempt still beats an error screen. Logged because
+      // a silently degrading scraper is indistinguishable from a
+      // working one until the chapter text looks wrong.
+      // eslint-disable-next-line no-console
+      console.error(
+        `[llm-scraper] ${pluginId} ${chapterPath} failed, using plugin fallback:`,
+        error,
+      );
     }
   }
   return fetchChapterWithPlugin(pluginId, chapterPath);
