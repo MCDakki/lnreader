@@ -17,23 +17,33 @@ import {
   parseChapterWithLlm,
   ParsedChapter,
 } from './llmChapterParser';
-import { getLlamaEngineSettings } from '@services/llm/llamaEngine';
+import {
+  getLlamaEngineSettings,
+  isLlmEngineAvailable,
+} from '@services/llm/llamaEngine';
 
 const escapeHtmlText = (text: string): string =>
   text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /** Render the model's structured output as chapter HTML. */
 export const parsedChapterToHtml = (parsed: ParsedChapter): string => {
-  const title = parsed.title ? `<h1>${escapeHtmlText(parsed.title)}</h1>\n` : '';
+  const title = parsed.title
+    ? `<h1>${escapeHtmlText(parsed.title)}</h1>\n`
+    : '';
   const body = parsed.content
     .map(paragraph => `<p>${escapeHtmlText(paragraph)}</p>`)
     .join('\n');
   return title + body;
 };
 
-/** True when the LLM scraper should handle chapter fetches. */
+/**
+ * True when the LLM scraper should handle chapter fetches: the setting
+ * is on AND a model is present. Without the model check every chapter
+ * read would fetch and sanitize the page only to fail at inference and
+ * then re-fetch it down the fallback path.
+ */
 export const isLlmScraperEnabled = (): boolean =>
-  getLlamaEngineSettings().enabled;
+  getLlamaEngineSettings().enabled && isLlmEngineAvailable();
 
 /** Scrape a chapter URL into structured {title, content[]} JSON. */
 export const scrapeChapter = async (url: string): Promise<ParsedChapter> => {

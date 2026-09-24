@@ -97,6 +97,18 @@ const initContext = async (
 };
 
 /**
+ * True when a GGUF model is actually resolvable on device, so callers
+ * can skip the expensive part of a pipeline (network fetch, HTML
+ * sanitizing) instead of doing the work and then failing at inference.
+ */
+export const isLlmEngineAvailable = (): boolean => {
+  if (context) {
+    return true;
+  }
+  return resolveModelPath(getLlamaEngineSettings().modelPath) !== null;
+};
+
+/**
  * Get the shared inference context, (re)loading the model if needed.
  * Throws `LlamaEngineError` when no usable model file is on device.
  */
